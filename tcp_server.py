@@ -10,7 +10,7 @@ SERVER_IP = "127.0.0.1"
 SERVER_PORT = 8000
 CHUNK_SIZE = 1024
 PACKET_SIZE = 1030
-LOSS_PROBABILITY = 0.5
+LOSS_PROBABILITY = 0.1
 
 packets = {}
 
@@ -36,14 +36,16 @@ def main():
                 seq_num = struct.unpack("!I", received_packet[:4])[0]
                 checksum = struct.unpack("!H", received_packet[4:6])[0]
                 data = received_packet[6:]
+    
+                #if(seq_num // CHUNK_SIZE == 200):
+                #    time.sleep(.6)
 
-                time.sleep(.1)
                 if random.random() < LOSS_PROBABILITY:
                     print(f"Packet {seq_num // CHUNK_SIZE} discarded due to simulated packet loss")
                 elif calculate_checksum(data) != checksum:
                     print(f"Packet {seq_num // CHUNK_SIZE} discarded due to checksum error.")
                 else:
-                    print("Expected:", expected_seq // CHUNK_SIZE, "Received:", seq_num // CHUNK_SIZE)
+                    #print("Expected:", expected_seq // CHUNK_SIZE, "Received:", seq_num // CHUNK_SIZE)
                     if(not seq_num in received):
                         out.seek(seq_num)
                         out.write(data)

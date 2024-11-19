@@ -1,38 +1,36 @@
 The base of my client main code is a while loop that continuously send over chunks to
 the server until the whole file is sent.
-I begind this loop by trying to send all of the packets that are currently in the window
-and then wait to receive an ACK from the server.
-Here is where I implement slow start, by checking the cwnd each time a ACK is received
+I begin this loop by trying to send all of the packets that are currently in the window.
+After that is done, I have a separate loop that is for the length of the window. 
+I start this loop by waiting to receive an ACK from the server.
+In the loop is where I implement slow start, by checking the cwnd each time a ACK is received
 and if cwnd < sshtresh, then I increment cwnd.
-Before this, I check if it's my first time receiving that ACK, and if so mark its RTT
-using an if statement and writing to the file and adding it to the RTTs dictionary.
-It's also here that I implement congestion avoidance by checking if cwnd > ssthresh, and if so
-then increment it (in the RTT if statement).
-For the fast retransmitting, I kept track of the last ACK as well as the amount of acknowledges.
-In this same area of code (After the RTT if statement and before the slow start implementation),
-I check if the received ACK matches the last one. If so, I increment the amount of duplicates,
-and if that equals 3, I retransmit and reset the duplicate count. 
+After that, I implement the 3x duplicate fast retramsitting by checking  if the received ACK matches
+the last one. If so, I increment the amount of duplicates, and if that equals 3, I retransmit and reset
+the duplicate count. I also set the ssthresh to cwnd // 2.
+At the end of this loop, I make sure to update and slide the window.
+After the loop is where I implemented congestion avoidance by incrementing the cwnd because after the
+loop is when the RTT is received by the client.
 
+Like I previously metioned, duplicate retransmission were handled by setting ssthresh to cwnd // 2,
+and retransmit the packet after received 3 duplicated Acks.
 Once a timeout happened on the client side, the program catches the socket timeout and notifies
 the client that there was a timeout and retramsits the packet at the beginning of the window
-while also resetting cwnd to 1 and duplicate and incrementing the count of retransmissions.
-On the other hand, if duplicate ACK's caused the retransmission, I do the same thing while also
-resetting the duplicate ACK count back to 0.
+while also resetting ssthresh to cwnd // 2 and cwnd to 1. 
+
 
 At first, I used RTT # and seconds so the two graphs didn't really show any matching patterns,
-so I changed the Retransmissions vs Time to also use RTT #. Due to this, the graphs kind of matched
-in that the cwnd vs RTT graph looked like the diagnol version of the retransmissions vs RTT graph.
-I noticed that the cwnd tends to reset back to 1 (drops on the graph) at the same x value (RTT) the
-retransmissions spike (Both happening when a packet seemed to be lost). This is because each time
-you retransmit, the cwnd is reset to 1.
-Increasing the loss percentage increased the amount of packets lost, leading to the cwnd getting
-reset to 1 more and the amount of retransmitts increasing. These increases led to the cwnd vs RTT
-graphs with higher loss percentages having more "hills". The Retransmissios vs RTT graphs with
-higher loss percentage appear to be more gradual, probably because you are more consistanely
-retransmitting due to more consistanly losing packets.
+so I changed the Retransmissions vs Time to also use RTT #. I observed that the more lost packages
+there were, the more variaty there was in the cwnd size as well as it took more RTT's to completely
+send the file. My 1% was the most readable; it followed my expectations by the cwnd growing exponentially
+at first until it reach an sstresh. It then grew linearly until a timeout occured, resetting the cwnd
+back to zero. From there, it started to grow exponentially again until reaching the ssthresh, where it
+begins to grow linearly.
 
 One of the main challenges I faced was not knowing if my implementation was completely correct
 due to not really having a reference/right answer to compare to. It's the process that matters,
 not the results. I had some confusion dealing with the RTT and how to graph them, but I think I
 was able to resolve them adequately. This project didn't really teach anything new, it just really
 refined what I was learning in class so now I can envision the whole picture due to implementing it.
+Another things was that I was confused with how RTT and ssthresh were to be implemented with timeouts and
+retransmissions; it took me a couple times to get it right.
